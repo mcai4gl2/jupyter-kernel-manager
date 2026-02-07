@@ -3,9 +3,11 @@
 src/**
 out/**
 node_modules/**
+.github/**
 .gitignore
 .eslintrc.json
 tsconfig.json
 webpack.config.js
 **/*.map
 **/*.ts
+!resources/**

@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "publisher": "jupyter-kernel-manager",
   "license": "MIT",
+  "icon": "resources/icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -218,6 +219,60 @@
             "description": "Kernel name (for per-kernel actions)"
           }
         }
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "jupyterKernelManager.gettingStarted",
+        "title": "Get Started with Jupyter Kernel Manager",
+        "description": "Set up isolated Python environments for your Jupyter notebooks in a few simple steps.",
+        "steps": [
+          {
+            "id": "createConfig",
+            "title": "Create kernels.json",
+            "description": "Initialize a kernel configuration file that defines your Python environments.\n\n[Initialize Kernel Config](command:jupyterKernelManager.initConfig)",
+            "media": {
+              "altText": "A kernels.json file with kernel definitions",
+              "markdown": "resources/walkthrough/create-config.md"
+            }
+          },
+          {
+            "id": "defineKernels",
+            "title": "Define Your Kernels",
+            "description": "Edit kernels.json to declare kernels with display names, descriptions, and requirements files.\n\n[Edit Kernel Config](command:jupyterKernelManager.editConfig)",
+            "media": {
+              "altText": "Editing kernels.json with IntelliSense",
+              "markdown": "resources/walkthrough/define-kernels.md"
+            }
+          },
+          {
+            "id": "setupKernels",
+            "title": "Set Up Virtual Environments",
+            "description": "Create isolated venvs and install requirements for each kernel.\n\n[Setup All Kernels](command:jupyterKernelManager.setupAllKernels)",
+            "media": {
+              "altText": "Setting up kernel virtual environments",
+              "markdown": "resources/walkthrough/setup-kernels.md"
+            }
+          },
+          {
+            "id": "registerKernels",
+            "title": "Register as Jupyter Kernels",
+            "description": "Register your environments as Jupyter kernelspecs so they appear in the notebook kernel picker.\n\n[Register All Kernels](command:jupyterKernelManager.registerAllKernels)",
+            "media": {
+              "altText": "Registering kernels with Jupyter",
+              "markdown": "resources/walkthrough/register-kernels.md"
+            }
+          },
+          {
+            "id": "openNotebook",
+            "title": "Open a Notebook",
+            "description": "Open a Jupyter notebook and select your newly registered kernel from the kernel picker (top-right corner).",
+            "media": {
+              "altText": "Selecting a kernel in a notebook",
+              "markdown": "resources/walkthrough/open-notebook.md"
+            }
+          }
+        ]
       }
     ],
     "jsonValidation": [

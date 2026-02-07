@@ -45,7 +45,7 @@ async function findNotebooks(): Promise<vscode.Uri[]> {
  *    notebook's relative path.
  * 2. Fall back to a kernel named "default" or "common", or the first kernel.
  */
-function resolveKernelForNotebook(
+export function resolveKernelForNotebook(
   notebookRelPath: string,
   kernelNames: string[],
 ): string | undefined {

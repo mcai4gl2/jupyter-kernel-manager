@@ -35,13 +35,45 @@ jobs:
       - name: Build (webpack)
         run: npm run compile
 
+      - name: Compile tests
+        run: npm run compile-tests
+
+      - name: Run tests (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm test
+        env:
+          DISPLAY: ':99.0'
+
+      - name: Run tests (non-Linux)
+        if: runner.os != 'Linux'
+        run: npm test
+
       - name: Package (production build)
         run: npm run package
 
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Package VSIX
+        run: vsce package --no-dependencies
+
       - name: Upload VSIX artifact
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: extension-vsix
+          name: jupyter-kernel-manager-vsix
           path: '*.vsix'
-          if-no-files-found: ignore
