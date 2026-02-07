@@ -39,9 +39,11 @@ suite('Hash Tracker', () => {
     assert.notStrictEqual(hash1, hash2);
   });
 
-  test('computeFileHash returns empty string for missing file', async () => {
-    const hash = await computeFileHash(path.join(tmpDir, 'missing.txt'));
-    assert.strictEqual(hash, '');
+  test('computeFileHash throws for missing file', async () => {
+    await assert.rejects(
+      () => computeFileHash(path.join(tmpDir, 'missing.txt')),
+      { code: 'ENOENT' }
+    );
   });
 
   test('writeHash and readStoredHash round-trip', async () => {
@@ -54,12 +56,12 @@ suite('Hash Tracker', () => {
     assert.strictEqual(stored, 'abc123def456');
   });
 
-  test('readStoredHash returns empty string when no hash file', async () => {
+  test('readStoredHash returns null when no hash file', async () => {
     const venvDir = path.join(tmpDir, '.venv');
     await fs.mkdir(venvDir, { recursive: true });
 
     const stored = await readStoredHash(venvDir);
-    assert.strictEqual(stored, '');
+    assert.strictEqual(stored, null);
   });
 
   test('checkFreshness reports upToDate when hashes match', async () => {
