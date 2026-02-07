@@ -2,7 +2,7 @@
   "name": "jupyter-kernel-manager",
   "displayName": "Jupyter Kernel Manager",
   "description": "Manage isolated virtual environments and Jupyter kernels for any project",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "mcai4gl2",
   "license": "MIT",
   "repository": {
@@ -212,7 +212,9 @@
     "taskDefinitions": [
       {
         "type": "jupyter-kernel-manager",
-        "required": ["action"],
+        "required": [
+          "action"
+        ],
         "properties": {
           "action": {
             "type": "string",
