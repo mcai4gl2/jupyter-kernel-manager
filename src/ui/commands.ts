@@ -5,6 +5,8 @@ import { KernelTreeDataProvider, KernelTreeItem } from './treeView';
 import { resolveConfigFilePath, loadKernelsConfig, KernelDefinition } from '../config/kernelConfig';
 import { setupKernel } from '../venv/venvManager';
 import { registerKernel, registerAllKernels, unregisterKernel } from '../kernels/kernelRegistrar';
+import { runDiagnostics } from '../kernels/kernelDiagnostics';
+import { updateNotebookKernels } from '../kernels/notebookUpdater';
 
 // Starter template content for kernels.json
 const KERNELS_TEMPLATE = `{
@@ -277,11 +279,93 @@ export function registerCommands(
     })
   );
 
-  // ----- Placeholder commands for Phase 4+ -----
+  // ----- Check Health (Diagnostics) -----
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jupyterKernelManager.checkHealth', async () => {
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Running kernel diagnostics...',
+          cancellable: false,
+        },
+        async () => {
+          await runDiagnostics();
+        }
+      );
+    })
+  );
+
+  // ----- Update Notebook Kernels -----
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jupyterKernelManager.updateNotebookKernels', async () => {
+      const configResult = await loadKernelsConfig();
+      if (!configResult.config) {
+        vscode.window.showErrorMessage(`Cannot load config: ${configResult.error}`);
+        return;
+      }
+
+      const confirm = await vscode.window.showWarningMessage(
+        'Update kernel metadata in all workspace notebooks?',
+        'Update',
+        'Cancel'
+      );
+      if (confirm !== 'Update') { return; }
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Updating notebook kernels...',
+          cancellable: true,
+        },
+        async (_progress, token) => {
+          const summary = await updateNotebookKernels(configResult.config!, false, token);
+          if (summary.errors > 0) {
+            vscode.window.showWarningMessage(
+              `Notebook update: ${summary.updated} updated, ${summary.errors} errors. Check Output for details.`
+            );
+          } else if (summary.updated > 0) {
+            vscode.window.showInformationMessage(
+              `Updated ${summary.updated} notebook(s). ${summary.skipped} already correct.`
+            );
+          } else {
+            vscode.window.showInformationMessage('All notebooks already have correct kernels.');
+          }
+        }
+      );
+    })
+  );
+
+  // ----- Update Notebook Kernels (Dry Run) -----
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jupyterKernelManager.updateNotebookKernelsDryRun', async () => {
+      const configResult = await loadKernelsConfig();
+      if (!configResult.config) {
+        vscode.window.showErrorMessage(`Cannot load config: ${configResult.error}`);
+        return;
+      }
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Scanning notebook kernels (dry run)...',
+          cancellable: true,
+        },
+        async (_progress, token) => {
+          const summary = await updateNotebookKernels(configResult.config!, true, token);
+          if (summary.updated > 0) {
+            vscode.window.showInformationMessage(
+              `[Dry Run] ${summary.updated} notebook(s) would be updated. Check Output for details.`
+            );
+          } else {
+            vscode.window.showInformationMessage('All notebooks already have correct kernels.');
+          }
+        }
+      );
+    })
+  );
+
+  // ----- Placeholder commands for Phase 5+ -----
   const placeholderCommands = [
-    'jupyterKernelManager.checkHealth',
-    'jupyterKernelManager.updateNotebookKernels',
-    'jupyterKernelManager.updateNotebookKernelsDryRun',
     'jupyterKernelManager.openKernelShell',
     'jupyterKernelManager.addNewKernel',
   ];
