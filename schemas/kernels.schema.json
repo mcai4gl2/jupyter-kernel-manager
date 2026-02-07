@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Jupyter Kernel Manager Configuration",
+  "description": "Defines Jupyter kernels with isolated virtual environments",
+  "type": "object",
+  "required": ["kernels"],
+  "properties": {
+    "kernels": {
+      "type": "object",
+      "description": "Map of kernel names to their definitions",
+      "additionalProperties": {
+        "$ref": "#/definitions/kernelDefinition"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "kernelDefinition": {
+      "type": "object",
+      "required": ["display_name"],
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "description": "Human-readable name shown in Jupyter kernel picker"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description for documentation"
+        },
+        "requirements_file": {
+          "type": "string",
+          "default": "requirements.txt",
+          "description": "Path to requirements file relative to the kernel directory (default: requirements.txt)"
+        },
+        "python_version": {
+          "type": "string",
+          "description": "Minimum Python version required (e.g., '3.10')"
+        },
+        "env": {
+          "type": "object",
+          "description": "Extra environment variables set when the kernel runs",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "variants": {
+          "type": "object",
+          "description": "Named variants with different requirements (e.g., cpu/gpu)",
+          "additionalProperties": {
+            "$ref": "#/definitions/kernelVariant"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "kernelVariant": {
+      "type": "object",
+      "required": ["requirements_file"],
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "description": "Optional override for the variant display name"
+        },
+        "requirements_file": {
+          "type": "string",
+          "description": "Variant-specific requirements file path"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

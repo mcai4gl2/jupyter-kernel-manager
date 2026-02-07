@@ -1,0 +1,22 @@
+{
+  "kernels": {
+    "default": {
+      "display_name": "Python (Default)",
+      "description": "Default kernel with common packages"
+    },
+    "example_with_variants": {
+      "display_name": "Python (Example - ML)",
+      "description": "Example kernel with CPU/GPU variants",
+      "variants": {
+        "cpu": {
+          "display_name": "Python (Example - ML - CPU)",
+          "requirements_file": "requirements-cpu.txt"
+        },
+        "gpu": {
+          "display_name": "Python (Example - ML - GPU)",
+          "requirements_file": "requirements-gpu.txt"
+        }
+      }
+    }
+  }
+}

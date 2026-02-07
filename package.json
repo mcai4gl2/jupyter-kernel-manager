@@ -1,0 +1,239 @@
+{
+  "name": "jupyter-kernel-manager",
+  "displayName": "Jupyter Kernel Manager",
+  "description": "Manage isolated virtual environments and Jupyter kernels for any project",
+  "version": "0.1.0",
+  "publisher": "jupyter-kernel-manager",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Data Science",
+    "Notebooks",
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:kernels.json"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "jupyterKernelManager.initConfig",
+        "title": "Initialize Kernel Config",
+        "category": "Jupyter Kernel Manager",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "jupyterKernelManager.setupAllKernels",
+        "title": "Setup All Kernels",
+        "category": "Jupyter Kernel Manager"
+      },
+      {
+        "command": "jupyterKernelManager.setupKernel",
+        "title": "Setup Kernel...",
+        "category": "Jupyter Kernel Manager"
+      },
+      {
+        "command": "jupyterKernelManager.forceRecreateKernel",
+        "title": "Force Recreate Kernel...",
+        "category": "Jupyter Kernel Manager"
+      },
+      {
+        "command": "jupyterKernelManager.registerAllKernels",
+        "title": "Register All Kernels",
+        "category": "Jupyter Kernel Manager"
+      },
+      {
+        "command": "jupyterKernelManager.registerKernel",
+        "title": "Register Kernel...",
+        "category": "Jupyter Kernel Manager"
+      },
+      {
+        "command": "jupyterKernelManager.unregisterKernel",
+        "title": "Unregister Kernel...",
+        "category": "Jupyter Kernel Manager"
+      },
+      {
+        "command": "jupyterKernelManager.checkHealth",
+        "title": "Check Kernel Health",
+        "category": "Jupyter Kernel Manager"
+      },
+      {
+        "command": "jupyterKernelManager.updateNotebookKernels",
+        "title": "Update Notebook Kernels",
+        "category": "Jupyter Kernel Manager"
+      },
+      {
+        "command": "jupyterKernelManager.updateNotebookKernelsDryRun",
+        "title": "Update Notebook Kernels (Dry Run)",
+        "category": "Jupyter Kernel Manager"
+      },
+      {
+        "command": "jupyterKernelManager.openKernelShell",
+        "title": "Open Kernel Shell...",
+        "category": "Jupyter Kernel Manager",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "jupyterKernelManager.addNewKernel",
+        "title": "Add New Kernel",
+        "category": "Jupyter Kernel Manager",
+        "icon": "$(add)"
+      },
+      {
+        "command": "jupyterKernelManager.editConfig",
+        "title": "Edit Kernel Config",
+        "category": "Jupyter Kernel Manager",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "jupyterKernelManager.refresh",
+        "title": "Refresh",
+        "category": "Jupyter Kernel Manager",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "jupyterKernelManager",
+          "title": "Jupyter Kernels",
+          "icon": "$(notebook)"
+        }
+      ]
+    },
+    "views": {
+      "jupyterKernelManager": [
+        {
+          "id": "jupyterKernelManager.kernelTree",
+          "name": "Kernels",
+          "contextualTitle": "Jupyter Kernel Manager"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "jupyterKernelManager.refresh",
+          "when": "view == jupyterKernelManager.kernelTree",
+          "group": "navigation"
+        },
+        {
+          "command": "jupyterKernelManager.addNewKernel",
+          "when": "view == jupyterKernelManager.kernelTree",
+          "group": "navigation"
+        },
+        {
+          "command": "jupyterKernelManager.editConfig",
+          "when": "view == jupyterKernelManager.kernelTree",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "jupyterKernelManager.setupKernel",
+          "when": "view == jupyterKernelManager.kernelTree && viewItem == kernel",
+          "group": "1_setup@1"
+        },
+        {
+          "command": "jupyterKernelManager.forceRecreateKernel",
+          "when": "view == jupyterKernelManager.kernelTree && viewItem == kernel",
+          "group": "1_setup@2"
+        },
+        {
+          "command": "jupyterKernelManager.registerKernel",
+          "when": "view == jupyterKernelManager.kernelTree && viewItem == kernel",
+          "group": "2_register@1"
+        },
+        {
+          "command": "jupyterKernelManager.unregisterKernel",
+          "when": "view == jupyterKernelManager.kernelTree && viewItem == kernel",
+          "group": "2_register@2"
+        },
+        {
+          "command": "jupyterKernelManager.openKernelShell",
+          "when": "view == jupyterKernelManager.kernelTree && viewItem == kernel",
+          "group": "3_shell@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Jupyter Kernel Manager",
+      "properties": {
+        "jupyterKernelManager.configPath": {
+          "type": "string",
+          "default": "kernels.json",
+          "description": "Path to kernels.json relative to workspace root"
+        },
+        "jupyterKernelManager.kernelsDir": {
+          "type": "string",
+          "default": "kernels",
+          "description": "Base directory for kernel venvs relative to workspace root"
+        },
+        "jupyterKernelManager.kernelPrefix": {
+          "type": "string",
+          "default": "py-learn",
+          "description": "Kernel name prefix for Jupyter registration (e.g., py-learn-common)"
+        },
+        "jupyterKernelManager.pypiMirror": {
+          "type": "string",
+          "default": "auto",
+          "description": "PyPI mirror URL ('auto' for geo-detection, or explicit URL)"
+        },
+        "jupyterKernelManager.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Python interpreter (empty for system default)"
+        },
+        "jupyterKernelManager.autoRegister": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically register kernels as Jupyter kernelspecs after setup"
+        },
+        "jupyterKernelManager.autoSetupOnOpen": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically set up kernels when opening a workspace"
+        },
+        "jupyterKernelManager.showNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notifications for kernel state changes"
+        }
+      }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "kernels.json",
+        "url": "./schemas/kernels.schema.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile",
+    "test": "vscode-test",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.3.8",
+    "eslint": "^8.56.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
