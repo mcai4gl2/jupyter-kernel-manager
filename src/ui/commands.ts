@@ -2,11 +2,12 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { KernelTreeDataProvider, KernelTreeItem } from './treeView';
-import { resolveConfigFilePath, loadKernelsConfig, KernelDefinition } from '../config/kernelConfig';
-import { setupKernel } from '../venv/venvManager';
+import { resolveConfigFilePath, resolveKernelsDir, loadKernelsConfig, KernelDefinition, KernelsConfig } from '../config/kernelConfig';
+import { setupKernel, getKernelVenvPath } from '../venv/venvManager';
 import { registerKernel, registerAllKernels, unregisterKernel } from '../kernels/kernelRegistrar';
 import { runDiagnostics } from '../kernels/kernelDiagnostics';
 import { updateNotebookKernels } from '../kernels/notebookUpdater';
+import { isWindows } from '../platform/platform';
 
 // Starter template content for kernels.json
 const KERNELS_TEMPLATE = `{
@@ -364,19 +365,119 @@ export function registerCommands(
     })
   );
 
-  // ----- Placeholder commands for Phase 5+ -----
-  const placeholderCommands = [
-    'jupyterKernelManager.openKernelShell',
-    'jupyterKernelManager.addNewKernel',
-  ];
+  // ----- Open Kernel Shell -----
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jupyterKernelManager.openKernelShell', async (treeItem?: KernelTreeItem) => {
+      const { kernelName, definition } = await resolveKernelFromArgs(treeItem);
+      if (!kernelName || !definition) { return; }
 
-  for (const cmd of placeholderCommands) {
-    context.subscriptions.push(
-      vscode.commands.registerCommand(cmd, () => {
-        vscode.window.showInformationMessage('This feature will be available in a future update.');
-      })
-    );
-  }
+      const venvPath = getKernelVenvPath(kernelName);
+      if (!venvPath) {
+        vscode.window.showErrorMessage('No workspace folder open.');
+        return;
+      }
+
+      // Build platform-specific activation command
+      let activateCmd: string;
+      if (isWindows()) {
+        activateCmd = `${path.join(venvPath, 'Scripts', 'activate')}`;
+      } else {
+        activateCmd = `. "${path.join(venvPath, 'bin', 'activate')}"`;
+      }
+
+      const terminal = vscode.window.createTerminal({
+        name: `Kernel: ${kernelName}`,
+        cwd: path.dirname(venvPath), // kernel directory
+      });
+      terminal.show();
+      terminal.sendText(activateCmd);
+    })
+  );
+
+  // ----- Add New Kernel -----
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jupyterKernelManager.addNewKernel', async () => {
+      // Step 1: Kernel name
+      const name = await vscode.window.showInputBox({
+        prompt: 'Kernel name (used as directory name and ID)',
+        placeHolder: 'e.g., my_project',
+        validateInput: (value) => {
+          if (!value) { return 'Name is required'; }
+          if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
+            return 'Name must contain only letters, numbers, hyphens, and underscores';
+          }
+          return undefined;
+        },
+      });
+      if (!name) { return; }
+
+      // Step 2: Display name
+      const displayName = await vscode.window.showInputBox({
+        prompt: 'Display name (shown in Jupyter kernel picker)',
+        placeHolder: `e.g., Python (${name})`,
+        value: `Python (${name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())})`,
+      });
+      if (!displayName) { return; }
+
+      // Step 3: Description (optional)
+      const description = await vscode.window.showInputBox({
+        prompt: 'Description (optional)',
+        placeHolder: 'e.g., Kernel for data analysis tasks',
+      });
+
+      // Create directory structure
+      const kernelsDir = resolveKernelsDir();
+      if (!kernelsDir) {
+        vscode.window.showErrorMessage('No workspace folder open.');
+        return;
+      }
+
+      const kernelDir = path.join(kernelsDir, name);
+      await fs.mkdir(kernelDir, { recursive: true });
+
+      // Create starter requirements.txt
+      const reqPath = path.join(kernelDir, 'requirements.txt');
+      try {
+        await fs.access(reqPath);
+      } catch {
+        await fs.writeFile(reqPath, '# Add your Python package requirements here\nipykernel\n', 'utf-8');
+      }
+
+      // Update kernels.json
+      const configPath = resolveConfigFilePath();
+      if (!configPath) { return; }
+
+      let config: KernelsConfig;
+      try {
+        const content = await fs.readFile(configPath, 'utf-8');
+        config = JSON.parse(content) as KernelsConfig;
+      } catch {
+        config = { kernels: {} };
+      }
+
+      if (config.kernels[name]) {
+        vscode.window.showWarningMessage(`Kernel "${name}" already exists in config.`);
+        return;
+      }
+
+      const newKernel: KernelDefinition = { display_name: displayName };
+      if (description) {
+        newKernel.description = description;
+      }
+      config.kernels[name] = newKernel;
+
+      await fs.writeFile(configPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+
+      // Open the config file and refresh
+      const doc = await vscode.workspace.openTextDocument(configPath);
+      await vscode.window.showTextDocument(doc);
+      await treeDataProvider.refresh();
+
+      vscode.window.showInformationMessage(
+        `Kernel "${name}" added. Edit requirements.txt, then run "Setup Kernel".`
+      );
+    })
+  );
 }
 
 // ----- Helpers -----

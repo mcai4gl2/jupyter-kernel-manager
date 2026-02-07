@@ -204,6 +204,22 @@
         }
       }
     },
+    "taskDefinitions": [
+      {
+        "type": "jupyter-kernel-manager",
+        "required": ["action"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "The action to perform (setupAll, registerAll, checkHealth, updateNotebooks, setup, register, shell)"
+          },
+          "kernel": {
+            "type": "string",
+            "description": "Kernel name (for per-kernel actions)"
+          }
+        }
+      }
+    ],
     "jsonValidation": [
       {
         "fileMatch": "kernels.json",
