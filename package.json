@@ -3,7 +3,7 @@
   "displayName": "Jupyter Kernel Manager",
   "description": "Manage isolated virtual environments and Jupyter kernels for any project",
   "version": "0.1.0",
-  "publisher": "jupyter-kernel-manager",
+  "publisher": "mcai4gl2",
   "license": "MIT",
   "icon": "resources/icon.png",
   "engines": {
