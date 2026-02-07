@@ -100,7 +100,8 @@ export class KernelTreeItem extends vscode.TreeItem {
   constructor(public readonly kernelInfo: KernelInfo) {
     super(kernelInfo.name, vscode.TreeItemCollapsibleState.Collapsed);
 
-    this.description = STATUS_LABELS[kernelInfo.status];
+    const regLabel = kernelInfo.isRegistered ? 'Registered' : 'Not Registered';
+    this.description = `${STATUS_LABELS[kernelInfo.status]} | ${regLabel}`;
     this.iconPath = STATUS_ICONS[kernelInfo.status];
     this.tooltip = this.buildTooltip();
     this.contextValue = 'kernel';
@@ -113,6 +114,7 @@ export class KernelTreeItem extends vscode.TreeItem {
       md.appendMarkdown(`${this.kernelInfo.definition.description}\n\n`);
     }
     md.appendMarkdown(`Status: ${STATUS_LABELS[this.kernelInfo.status]}\n\n`);
+    md.appendMarkdown(`Registered: ${this.kernelInfo.isRegistered ? 'Yes' : 'No'}\n\n`);
     if (this.kernelInfo.definition.variants) {
       const variantNames = Object.keys(this.kernelInfo.definition.variants).join(', ');
       md.appendMarkdown(`Variants: ${variantNames}\n`);
@@ -145,6 +147,7 @@ export class KernelTreeItem extends vscode.TreeItem {
     }
 
     items.push(makeDetailItem('Status', STATUS_LABELS[this.kernelInfo.status]));
+    items.push(makeDetailItem('Registered', this.kernelInfo.isRegistered ? 'Yes' : 'No'));
 
     if (this.kernelInfo.venvPath) {
       items.push(makeDetailItem('Venv', this.kernelInfo.venvPath));

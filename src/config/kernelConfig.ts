@@ -3,6 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { isVenvValid } from '../platform/platform';
 import { checkFreshness } from '../venv/hashTracker';
+import { isKernelRegistered } from '../kernels/kernelRegistrar';
 
 // ----- TypeScript interfaces matching kernels.json schema -----
 
@@ -217,11 +218,14 @@ export async function getKernelInfoList(config: KernelsConfig): Promise<KernelIn
       }
     }
 
+    const registered = await isKernelRegistered(name);
+
     result.push({
       name,
       definition,
       status,
       venvPath,
+      isRegistered: registered,
     });
   }
 

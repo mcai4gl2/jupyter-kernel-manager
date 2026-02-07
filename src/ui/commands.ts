@@ -3,7 +3,8 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { KernelTreeDataProvider, KernelTreeItem } from './treeView';
 import { resolveConfigFilePath, loadKernelsConfig, KernelDefinition } from '../config/kernelConfig';
-import { setupKernel, setupAllKernels } from '../venv/venvManager';
+import { setupKernel } from '../venv/venvManager';
+import { registerKernel, registerAllKernels, unregisterKernel } from '../kernels/kernelRegistrar';
 
 // Starter template content for kernels.json
 const KERNELS_TEMPLATE = `{
@@ -139,6 +140,16 @@ export function registerCommands(
             results.push(result);
           }
 
+          // Auto-register successfully set up kernels
+          const autoRegister = vscode.workspace.getConfiguration('jupyterKernelManager').get<boolean>('autoRegister', true);
+          if (autoRegister) {
+            const successfulKernels = results.filter(r => r.success);
+            for (const r of successfulKernels) {
+              if (token.isCancellationRequested) { break; }
+              await registerKernel(r.kernelName, kernels[r.kernelName]);
+            }
+          }
+
           await treeDataProvider.refresh();
 
           const succeeded = results.filter(r => r.success).length;
@@ -148,7 +159,8 @@ export function registerCommands(
               `Kernel setup: ${succeeded} succeeded, ${failed} failed. Check Output for details.`
             );
           } else {
-            vscode.window.showInformationMessage(`All ${succeeded} kernels set up successfully.`);
+            const regMsg = autoRegister ? ' and registered' : '';
+            vscode.window.showInformationMessage(`All ${succeeded} kernels set up${regMsg} successfully.`);
           }
         }
       );
@@ -182,11 +194,91 @@ export function registerCommands(
     })
   );
 
-  // ----- Placeholder commands for Phase 3+ -----
+  // ----- Register All Kernels -----
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jupyterKernelManager.registerAllKernels', async () => {
+      const configResult = await loadKernelsConfig();
+      if (!configResult.config) {
+        vscode.window.showErrorMessage(`Cannot load config: ${configResult.error}`);
+        return;
+      }
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Registering all kernels...',
+          cancellable: true,
+        },
+        async (_progress, token) => {
+          const results = await registerAllKernels(configResult.config!.kernels, token);
+          await treeDataProvider.refresh();
+
+          const succeeded = results.filter(r => r.success).length;
+          const failed = results.filter(r => !r.success).length;
+          if (failed > 0) {
+            vscode.window.showWarningMessage(
+              `Registration: ${succeeded} succeeded, ${failed} failed. Check Output for details.`
+            );
+          } else {
+            vscode.window.showInformationMessage(`All ${succeeded} kernels registered successfully.`);
+          }
+        }
+      );
+    })
+  );
+
+  // ----- Register Kernel... (single, with picker) -----
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jupyterKernelManager.registerKernel', async (treeItem?: KernelTreeItem) => {
+      const { kernelName, definition, variant } = await resolveKernelFromArgs(treeItem);
+      if (!kernelName || !definition) { return; }
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: `Registering kernel: ${kernelName}...`,
+          cancellable: false,
+        },
+        async () => {
+          const result = await registerKernel(kernelName, definition, variant);
+          await treeDataProvider.refresh();
+
+          if (result.success) {
+            vscode.window.showInformationMessage(`Kernel "${kernelName}" registered as ${result.specName}.`);
+          } else {
+            vscode.window.showErrorMessage(`Registration failed: ${result.message}`);
+          }
+        }
+      );
+    })
+  );
+
+  // ----- Unregister Kernel... -----
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jupyterKernelManager.unregisterKernel', async (treeItem?: KernelTreeItem) => {
+      const { kernelName, definition, variant } = await resolveKernelFromArgs(treeItem);
+      if (!kernelName || !definition) { return; }
+
+      const confirm = await vscode.window.showWarningMessage(
+        `Unregister "${kernelName}"? It will no longer appear in the Jupyter kernel picker.`,
+        'Unregister',
+        'Cancel'
+      );
+      if (confirm !== 'Unregister') { return; }
+
+      const result = await unregisterKernel(kernelName, variant);
+      await treeDataProvider.refresh();
+
+      if (result.success) {
+        vscode.window.showInformationMessage(`Kernel "${kernelName}" unregistered.`);
+      } else {
+        vscode.window.showErrorMessage(`Unregister failed: ${result.message}`);
+      }
+    })
+  );
+
+  // ----- Placeholder commands for Phase 4+ -----
   const placeholderCommands = [
-    'jupyterKernelManager.registerAllKernels',
-    'jupyterKernelManager.registerKernel',
-    'jupyterKernelManager.unregisterKernel',
     'jupyterKernelManager.checkHealth',
     'jupyterKernelManager.updateNotebookKernels',
     'jupyterKernelManager.updateNotebookKernelsDryRun',
@@ -307,13 +399,28 @@ async function runSingleKernelSetup(
     async (_progress, token) => {
       const result = await setupKernel(kernelName, definition, force, variant, token);
 
-      await treeDataProvider.refresh();
-
       if (result.success) {
-        vscode.window.showInformationMessage(`Kernel "${kernelName}" setup complete: ${result.message}`);
+        // Auto-register if setting is enabled
+        const autoRegister = vscode.workspace.getConfiguration('jupyterKernelManager').get<boolean>('autoRegister', true);
+        if (autoRegister) {
+          const regResult = await registerKernel(kernelName, definition, variant);
+          if (regResult.success) {
+            vscode.window.showInformationMessage(
+              `Kernel "${kernelName}" set up and registered as ${regResult.specName}.`
+            );
+          } else {
+            vscode.window.showWarningMessage(
+              `Kernel "${kernelName}" set up, but registration failed: ${regResult.message}`
+            );
+          }
+        } else {
+          vscode.window.showInformationMessage(`Kernel "${kernelName}" setup complete: ${result.message}`);
+        }
       } else {
         vscode.window.showErrorMessage(`Kernel "${kernelName}" setup failed: ${result.message}`);
       }
+
+      await treeDataProvider.refresh();
     }
   );
 }
