@@ -13,7 +13,7 @@ suite('Platform Utilities', () => {
   });
 
   test('getVenvPythonPath returns platform-appropriate path', () => {
-    const venvDir = '/project/kernels/default/.venv';
+    const venvDir = path.join('project', 'kernels', 'default', '.venv');
     const result = getVenvPythonPath(venvDir);
 
     if (isWindows()) {
@@ -25,7 +25,7 @@ suite('Platform Utilities', () => {
   });
 
   test('getVenvPipPath returns platform-appropriate path', () => {
-    const venvDir = '/project/kernels/default/.venv';
+    const venvDir = path.join('project', 'kernels', 'default', '.venv');
     const result = getVenvPipPath(venvDir);
 
     if (isWindows()) {
