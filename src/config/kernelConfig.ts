@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { isVenvValid } from '../platform/platform';
+import { checkFreshness } from '../venv/hashTracker';
 
 // ----- TypeScript interfaces matching kernels.json schema -----
 
@@ -183,7 +185,7 @@ export function validateConfig(obj: unknown): string | null {
 
 /**
  * Extracts a flat list of KernelInfo from a loaded config.
- * Checks venv existence to determine basic status.
+ * Checks venv existence and requirements hash to determine status.
  */
 export async function getKernelInfoList(config: KernelsConfig): Promise<KernelInfo[]> {
   const kernelsDir = resolveKernelsDir();
@@ -195,12 +197,23 @@ export async function getKernelInfoList(config: KernelsConfig): Promise<KernelIn
 
     if (kernelsDir) {
       venvPath = path.join(kernelsDir, name, '.venv');
-      try {
-        await fs.access(venvPath);
-        // Venv exists — mark as ready (Phase 2 will refine with hash checks)
-        status = KernelStatus.Ready;
-      } catch {
-        status = KernelStatus.NotSetUp;
+      const kernelDir = path.join(kernelsDir, name);
+      const reqFileName = definition.requirements_file ?? 'requirements.txt';
+      const reqPath = path.join(kernelDir, reqFileName);
+
+      const valid = await isVenvValid(venvPath);
+      if (valid) {
+        // Venv exists with a working python — check hash freshness
+        const freshness = await checkFreshness(venvPath, reqPath);
+        status = freshness.upToDate ? KernelStatus.Ready : KernelStatus.NeedsUpdate;
+      } else {
+        // Check if venv dir exists but is broken
+        try {
+          await fs.access(venvPath);
+          status = KernelStatus.Error; // directory exists but no valid python
+        } catch {
+          status = KernelStatus.NotSetUp;
+        }
       }
     }
 
