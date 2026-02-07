@@ -5,6 +5,10 @@
   "version": "0.1.0",
   "publisher": "mcai4gl2",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcai4gl2/jupyter-kernel-manager"
+  },
   "icon": "resources/icon.png",
   "engines": {
     "vscode": "^1.85.0"
