@@ -41,7 +41,7 @@ suite('Kernel Registrar', () => {
 
     test('parent is jupyter data dir', () => {
       const result = getKernelSpecsDir();
-      assert.ok(result.includes('jupyter'));
+      assert.ok(result.toLowerCase().includes('jupyter'));
     });
   });
 
