@@ -7,4 +7,10 @@ export default defineConfig({
     ui: 'tdd',
     timeout: 20000,
   },
+  coverage: {
+    include: ['out/**/*.js'],
+    exclude: ['out/test/**'],
+    reporter: ['text', 'lcov'],
+    output: './coverage',
+  },
 });
