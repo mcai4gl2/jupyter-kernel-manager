@@ -4,3 +4,4 @@ node_modules
 .vscode-test/
 *.vsix
 coverage/
+.geo_protected_config.json

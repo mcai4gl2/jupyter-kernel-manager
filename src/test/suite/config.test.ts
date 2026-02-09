@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { validateConfig } from '../../config/kernelConfig';
+import { validateConfig, getConfigPath, getKernelsDir, getKernelPrefix, resolveConfigFilePath, resolveKernelsDir, loadKernelsConfig } from '../../config/kernelConfig';
 
 suite('Config Validation', () => {
   test('accepts valid minimal config', () => {
@@ -165,5 +165,59 @@ suite('Config Validation', () => {
       },
     });
     assert.ok(result);
+  });
+});
+
+suite('Config Helpers', () => {
+  test('getConfigPath returns a string', () => {
+    const result = getConfigPath();
+    assert.strictEqual(typeof result, 'string');
+    assert.ok(result.length > 0);
+    // Default should be 'kernels.json'
+    assert.strictEqual(result, 'kernels.json');
+  });
+
+  test('getKernelsDir returns a string', () => {
+    const result = getKernelsDir();
+    assert.strictEqual(typeof result, 'string');
+    assert.ok(result.length > 0);
+    // Default should be 'kernels'
+    assert.strictEqual(result, 'kernels');
+  });
+
+  test('getKernelPrefix returns a string', () => {
+    const result = getKernelPrefix();
+    assert.strictEqual(typeof result, 'string');
+    assert.ok(result.length > 0);
+    // Default should be 'py-learn'
+    assert.strictEqual(result, 'py-learn');
+  });
+
+  test('resolveConfigFilePath returns string or undefined', () => {
+    const result = resolveConfigFilePath();
+    // In test environment, may be undefined (no workspace) or a string
+    if (result !== undefined) {
+      assert.strictEqual(typeof result, 'string');
+      assert.ok(result.endsWith('kernels.json'));
+    }
+  });
+
+  test('resolveKernelsDir returns string or undefined', () => {
+    const result = resolveKernelsDir();
+    if (result !== undefined) {
+      assert.strictEqual(typeof result, 'string');
+      assert.ok(result.endsWith('kernels'));
+    }
+  });
+
+  test('loadKernelsConfig returns a ConfigLoadResult', async () => {
+    const result = await loadKernelsConfig();
+    assert.ok(typeof result === 'object');
+    // Should have either config or error
+    if (result.config === null) {
+      assert.ok(typeof result.error === 'string');
+    } else {
+      assert.ok(typeof result.config.kernels === 'object');
+    }
   });
 });
