@@ -57,5 +57,8 @@ export function deactivate(): void {
  * Returns the shared output channel (for use by other modules in later phases).
  */
 export function getOutputChannel(): vscode.OutputChannel {
+  if (!outputChannel) {
+    outputChannel = vscode.window.createOutputChannel('Jupyter Kernel Manager');
+  }
   return outputChannel;
 }

@@ -83,7 +83,7 @@ export class KernelTreeDataProvider implements vscode.TreeDataProvider<TreeNode>
 // at module load time, which fails due to a circular dependency chain:
 // kernelRegistrar → extension → treeView → kernelConfig → kernelRegistrar
 
-function getStatusIcon(status: KernelStatus): vscode.ThemeIcon {
+export function getStatusIcon(status: KernelStatus): vscode.ThemeIcon {
   switch (status) {
     case KernelStatus.Ready: return new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
     case KernelStatus.NeedsUpdate: return new vscode.ThemeIcon('warning', new vscode.ThemeColor('list.warningForeground'));
@@ -92,7 +92,7 @@ function getStatusIcon(status: KernelStatus): vscode.ThemeIcon {
   }
 }
 
-function getStatusLabel(status: KernelStatus): string {
+export function getStatusLabel(status: KernelStatus): string {
   switch (status) {
     case KernelStatus.Ready: return 'Ready';
     case KernelStatus.NeedsUpdate: return 'Needs Update';

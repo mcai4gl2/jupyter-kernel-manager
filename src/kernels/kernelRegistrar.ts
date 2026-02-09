@@ -45,7 +45,7 @@ interface KernelSpec {
   env?: Record<string, string>;
 }
 
-function buildKernelSpec(
+export function buildKernelSpec(
   pythonPath: string,
   displayName: string,
   env?: Record<string, string>,

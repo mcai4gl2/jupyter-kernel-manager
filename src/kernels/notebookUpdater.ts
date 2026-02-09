@@ -77,7 +77,7 @@ export function resolveKernelForNotebook(
 /**
  * Reads a notebook, updates its kernelspec metadata, and optionally writes it back.
  */
-async function updateSingleNotebook(
+export async function updateSingleNotebook(
   notebookPath: string,
   kernelSpecName: string,
   displayName: string,
