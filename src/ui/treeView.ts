@@ -79,20 +79,27 @@ export class KernelTreeDataProvider implements vscode.TreeDataProvider<TreeNode>
 }
 
 // ----- Status display helpers -----
+// These are functions (not top-level constants) to avoid accessing KernelStatus
+// at module load time, which fails due to a circular dependency chain:
+// kernelRegistrar → extension → treeView → kernelConfig → kernelRegistrar
 
-const STATUS_ICONS: Record<KernelStatus, vscode.ThemeIcon> = {
-  [KernelStatus.Ready]: new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed')),
-  [KernelStatus.NeedsUpdate]: new vscode.ThemeIcon('warning', new vscode.ThemeColor('list.warningForeground')),
-  [KernelStatus.NotSetUp]: new vscode.ThemeIcon('circle-outline', new vscode.ThemeColor('disabledForeground')),
-  [KernelStatus.Error]: new vscode.ThemeIcon('error', new vscode.ThemeColor('testing.iconFailed')),
-};
+function getStatusIcon(status: KernelStatus): vscode.ThemeIcon {
+  switch (status) {
+    case KernelStatus.Ready: return new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
+    case KernelStatus.NeedsUpdate: return new vscode.ThemeIcon('warning', new vscode.ThemeColor('list.warningForeground'));
+    case KernelStatus.NotSetUp: return new vscode.ThemeIcon('circle-outline', new vscode.ThemeColor('disabledForeground'));
+    case KernelStatus.Error: return new vscode.ThemeIcon('error', new vscode.ThemeColor('testing.iconFailed'));
+  }
+}
 
-const STATUS_LABELS: Record<KernelStatus, string> = {
-  [KernelStatus.Ready]: 'Ready',
-  [KernelStatus.NeedsUpdate]: 'Needs Update',
-  [KernelStatus.NotSetUp]: 'Not Set Up',
-  [KernelStatus.Error]: 'Error',
-};
+function getStatusLabel(status: KernelStatus): string {
+  switch (status) {
+    case KernelStatus.Ready: return 'Ready';
+    case KernelStatus.NeedsUpdate: return 'Needs Update';
+    case KernelStatus.NotSetUp: return 'Not Set Up';
+    case KernelStatus.Error: return 'Error';
+  }
+}
 
 // ----- Tree Items -----
 
@@ -101,8 +108,8 @@ export class KernelTreeItem extends vscode.TreeItem {
     super(kernelInfo.name, vscode.TreeItemCollapsibleState.Collapsed);
 
     const regLabel = kernelInfo.isRegistered ? 'Registered' : 'Not Registered';
-    this.description = `${STATUS_LABELS[kernelInfo.status]} | ${regLabel}`;
-    this.iconPath = STATUS_ICONS[kernelInfo.status];
+    this.description = `${getStatusLabel(kernelInfo.status)} | ${regLabel}`;
+    this.iconPath = getStatusIcon(kernelInfo.status);
     this.tooltip = this.buildTooltip();
     this.contextValue = 'kernel';
   }
@@ -113,7 +120,7 @@ export class KernelTreeItem extends vscode.TreeItem {
     if (this.kernelInfo.definition.description) {
       md.appendMarkdown(`${this.kernelInfo.definition.description}\n\n`);
     }
-    md.appendMarkdown(`Status: ${STATUS_LABELS[this.kernelInfo.status]}\n\n`);
+    md.appendMarkdown(`Status: ${getStatusLabel(this.kernelInfo.status)}\n\n`);
     md.appendMarkdown(`Registered: ${this.kernelInfo.isRegistered ? 'Yes' : 'No'}\n\n`);
     if (this.kernelInfo.definition.variants) {
       const variantNames = Object.keys(this.kernelInfo.definition.variants).join(', ');
@@ -146,7 +153,7 @@ export class KernelTreeItem extends vscode.TreeItem {
       }
     }
 
-    items.push(makeDetailItem('Status', STATUS_LABELS[this.kernelInfo.status]));
+    items.push(makeDetailItem('Status', getStatusLabel(this.kernelInfo.status)));
     items.push(makeDetailItem('Registered', this.kernelInfo.isRegistered ? 'Yes' : 'No'));
 
     if (this.kernelInfo.venvPath) {
